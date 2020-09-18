@@ -1,0 +1,137 @@
+$(document).on('click', ".delete-user", function() {
+	$('.FormDeleteTime').on('submit',function(e){
+        if(!confirm('Do you want to delete this item?')){
+            e.preventDefault();
+        }
+    });
+});
+$(document).ready( function() { 
+	$(document).on('click', '.delete_modal', function() {
+	    $('.delete_modal_field').val($(this).data('id')); 
+        $('.modal_fieldName').text('"'+ $(this).data('name')+'"');  
+	}); 
+     
+    $('.dropdown-menu.dropdown-menu-right').attr('aria-labelledby', 'navbarDropdownLanguageLink').addClass('navbar-dropdown');
+
+});
+function add_remove_div(){
+	$(".field_added").remove('');
+    $(".error-list").empty();
+    $('.success_error_message').hide();
+}
+$(document).on('click', '.edit_modal', function() {
+    $('#footer_action_button').text(" Update");
+    $('#footer_action_button').addClass('glyphicon-check');
+    $('#footer_action_button').removeClass('glyphicon-trash');
+    $('.actionBtn').addClass('btn-success');
+    $('.actionBtn').removeClass('btn-danger');
+    $('.actionBtn').addClass('edit');
+    // $('.modal-title').text('Edit');
+    $('.deleteContent').hide();
+    $('.form-horizontal').show();
+    $('#edit_field_id').val($(this).data('id'));
+    $('#edit_field_name').val($(this).data('name'));
+    $('#edit_field_type').val($(this).data('type'));
+    $('#edit_field_sku').val($(this).data('sku')); 
+    $('#myModal').modal('show');
+}); 
+$(document).on('click', ".add_field", function() {
+	add_remove_div();
+    var f_token = $('input[name="_token"]').val(); 
+    var f_name = $('#field_name').val();
+    var f_type = $('#field_type option:selected').val();
+    var f_sku = $('#sku').val(); 
+    $.ajax({
+        url: "masterfields/create",
+        type:'POST',
+        data: {_token:f_token, f_name:f_name, f_type:f_type, f_sku:f_sku},
+        success: function(data) { 
+            if (data) { 
+        	 	$('.success_error_message').show();
+                $("#order-listing").load(window.location.href + " #order-listing" ); 
+                $("#fieldsform").load(window.location.href + " #fieldsform" ); 
+                $(".success_error_message .alert button").after('<span class="field_added">'+ data.success+ '</span>');
+             	$(".success_error_message .alert").addClass('alert-success'); 
+				$(".success_error_message .alert").removeClass('alert-danger');
+				$(".error-list").remove();
+            } 
+        },
+        error: function (xhr) { 
+        	$(".error-list").remove();
+        	$(".success_error_message .alert button").after('<ul class="list list-check m-0 error-list"> </ul>');
+            if(xhr.responseJSON.errors){ 
+                
+                $.each(xhr.responseJSON.errors, function(key,value) { 
+                    if(value != 'undefined'){  
+                        $(".success_error_message .alert ").addClass('alert-danger'); 
+						$(".success_error_message .alert").removeClass('alert-success');
+						$('.success_error_message').show(); 
+                        $(".error-list").append('<li>'+ value +'</li>');
+                    } 
+                });  
+            }else{
+                $('.success_error_message').hide();
+
+            } 
+        }
+    });
+});  
+
+$('.modal-footer').on('click', '.edit_field', function() { 
+	add_remove_div();
+    $.ajax({
+        type: 'post',
+        url: 'masterfields/edit',
+        data: {
+            '_token': $('input[name=_token]').val(),
+            'id': $("#edit_field_id").val(),
+            'name': $('#edit_field_name').val(),
+            'type': $('#edit_field_type').val()
+        },
+        success: function(data) {
+            $('#myModal').modal('hide'); 
+            $("#order-listing").load(window.location.href + " #order-listing" ); 
+            $('.success_error_message').show();
+         	$(".success_error_message .alert button").after('<span class="field_added">'+ data.success+ '</span>');
+	        $(".success_error_message .alert").addClass('alert-success'); 
+			$(".success_error_message .alert").removeClass('alert-danger'); 
+        }
+    });
+});
+
+$(document).on('click', ".delete_modal_field", function() {
+ 	add_remove_div();
+    var id = $(this).val(); 
+    var token = $("meta[name='csrf-token']").attr("content"); 
+    $.ajax({
+        url: "masterfields/"+ id +"/delete",
+        type:'POST',
+        data: {id:id, _token: token},
+        success: function(data) {
+        	console.log(data.success);
+           	$("#order-listing").load(window.location.href + " #order-listing" );
+           	$('.success_error_message').show();
+           	$(".error-list").remove(); 
+	        $(".success_error_message .alert button").after('<span class="field_added">'+ data.success+ '</span>');
+	        $(".success_error_message .alert").addClass('alert-success'); 
+			$(".success_error_message .alert").removeClass('alert-danger'); 
+        } 
+    });
+}); 
+
+// Image Upload in Edit Store
+
+function readURL(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            $('#imagePreview').attr('src',  e.target.result  );
+            $('#imagePreview').hide();
+            $('#imagePreview').fadeIn(650);
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+$("#store_logo").change(function() {
+    readURL(this);
+});
